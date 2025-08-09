@@ -13,35 +13,11 @@
           onload="renderMathInElement(document.body);"
           integrity=""
           crossorigin="anonymous"></script>
-  <style>
-    :root{
-      --bg:#0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#9ca3af; --accent:#22c55e;
-      --warn:#f59e0b; --err:#ef4444; --line:#374151; --chip:#1f2937;
-    }
-    html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";}
-    .app{display:grid;grid-template-columns:360px 1fr;gap:16px;height:100vh;padding:16px;box-sizing:border-box}
-    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;overflow:auto}
-    h1{font-size:20px;margin:0 0 10px 0}
-    h2{font-size:16px;margin:14px 0 10px 0;border-bottom:1px dashed var(--line);padding-bottom:6px}
-    .grid{display:grid;grid-template-columns:1fr 90px;gap:8px;align-items:center}
-    .row{display:grid;grid-template-columns:1fr 90px 90px;gap:8px;align-items:center;margin-bottom:8px}
-    label{font-size:13px;color:var(--muted)}
-    input[type="range"]{width:100%}
-    input[type="number"]{width:100%;padding:6px;border-radius:8px;border:1px solid var(--line);background:#0b1220;color:var(--ink)}
-    .tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
-    .tab{padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--chip);cursor:pointer;font-size:13px}
-    .tab.active{background:var(--accent);border-color:transparent;color:#052e16}
-    .tabpanel{display:none}
-    .tabpanel.active{display:block}
-    .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#122036;border:1px solid var(--line);font-size:12px;color:var(--muted)}
-    .warn{color:var(--warn)}
-    .err{color:var(--err)}
-    .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-    .small{font-size:12px;color:var(--muted)}
-    .eqbox{background:var(--chip);border:1px solid var(--line);border-radius:12px;padding:10px;margin:10px 0}
-    canvas{background:#0b1220;border-radius:12px;border:1px solid var(--line)}
-    .footer{font-size:12px;color:var(--muted);margin-top:8px}
-  </style>
+  <!-- Local stylesheets and scripts -->
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="economic-model.js"></script>
+  <script defer src="chart-manager.js"></script>
+  <script defer src="ui-controller.js"></script>
 </head>
 <body>
   <div class="app">
@@ -55,64 +31,64 @@
       <h2>Time & Rates</h2>
       <div class="row">
         <label>Real return \(r\)</label>
-        <input id="r" type="number" step="0.0001" value="0.03">
-        <input id="r_slider" type="range" min="-0.02" max="0.12" step="0.0001" value="0.03">
+        <input id="r" type="number" step="0.01" value="0.03">
+        <input id="r_slider" type="range" min="-0.02" max="0.12" step="0.01" value="0.03">
       </div>
       <div class="row">
         <label>Pure impatience \(\rho\)</label>
-        <input id="rho" type="number" step="0.0001" value="0.01">
-        <input id="rho_slider" type="range" min="0" max="0.10" step="0.0001" value="0.01">
+        <input id="rho" type="number" step="0.01" value="0.01">
+        <input id="rho_slider" type="range" min="0" max="0.10" step="0.01" value="0.01">
       </div>
       <div class="row">
         <label>Levy time \(T_1\)</label>
-        <input id="T1" type="number" step="0.1" value="10">
-        <input id="T1_slider" type="range" min="0.25" max="40" step="0.25" value="10">
+        <input id="T1" type="number" step="1" value="10">
+        <input id="T1_slider" type="range" min="1" max="40" step="1" value="10">
       </div>
       <div class="row">
         <label>Horizon after \(T_1\) (\(T_2\))</label>
-        <input id="T2" type="number" step="0.1" value="20">
-        <input id="T2_slider" type="range" min="0.25" max="40" step="0.25" value="20">
+        <input id="T2" type="number" step="1" value="20">
+        <input id="T2_slider" type="range" min="1" max="40" step="1" value="20">
       </div>
 
       <h2>Preferences</h2>
       <div class="row">
         <label>CRRA (consumption) \(\gamma\)</label>
-        <input id="gamma" type="number" step="0.01" value="2.0">
-        <input id="gamma_slider" type="range" min="0.4" max="5.0" step="0.01" value="2.0">
+        <input id="gamma" type="number" step="0.1" value="2.0">
+        <input id="gamma_slider" type="range" min="0.1" max="3.0" step="0.1" value="2.0">
       </div>
       <div class="row">
         <label>CRRA (bequest) \(\eta\)</label>
-        <input id="eta" type="number" step="0.01" value="1.5">
-        <input id="eta_slider" type="range" min="0.4" max="5.0" step="0.01" value="1.5">
+        <input id="eta" type="number" step="0.1" value="1.5">
+        <input id="eta_slider" type="range" min="0.1" max="3.0" step="0.1" value="1.5">
       </div>
       <div class="row">
         <label>Bequest weight \(\beta\)</label>
-        <input id="beta" type="number" step="0.0001" value="0.5">
-        <input id="beta_slider" type="range" min="0.01" max="2.0" step="0.0001" value="0.5">
+        <input id="beta" type="number" step="0.1" value="0.5">
+        <input id="beta_slider" type="range" min="0.01" max="10" step="0.01" value="0.5">
       </div>
 
       <h2>Initial Conditions & Flows</h2>
       <div class="row">
-        <label>Initial wealth \(w_0\)</label>
-        <input id="w0" type="number" step="0.01" value="100">
-        <input id="w0_slider" type="range" min="1" max="1000" step="1" value="100">
+        <label>Initial wealth \(w_0 = 1\) (fixed)</label>
+        <input id="w0" type="hidden" value="1">
+        <span class="pill">w₀ = 1.000</span>
       </div>
       <div class="row">
         <label>Income flow \(y\)</label>
         <input id="y" type="number" step="0.01" value="0">
-        <input id="y_slider" type="range" min="0" max="100" step="0.01" value="0">
+        <input id="y_slider" type="range" min="0" max="1" step="0.01" value="0">
       </div>
       <div class="row">
         <label>Borrowing floor \(\zeta\)</label>
-        <input id="zeta" type="number" step="0.01" value="0">
-        <input id="zeta_slider" type="range" min="0" max="500" step="0.01" value="0">
+        <input id="zeta" type="number" step="0.1" value="0">
+        <input id="zeta_slider" type="range" min="0" max="5" step="0.1" value="0">
       </div>
 
       <h2>Levy</h2>
       <div class="row">
         <label>Levy rate \(\tau\)</label>
-        <input id="tau" type="number" step="0.0001" value="0.1">
-        <input id="tau_slider" type="range" min="0" max="0.9" step="0.0001" value="0.1">
+        <input id="tau" type="number" step="0.01" value="0.1">
+        <input id="tau_slider" type="range" min="0" max="0.9" step="0.01" value="0.1">
       </div>
 
       <div class="footer">
@@ -123,23 +99,23 @@
     </aside>
 
     <main class="panel">
-      <div class="tabs">
-        <div class="tab active" data-tab="cons">Consumption</div>
-        <div class="tab" data-tab="wealth">Wealth</div>
-        <div class="tab" data-tab="tau">τ-Comparatives</div>
-        <div class="tab" data-tab="eqs">Equations</div>
-      </div>
-
-      <div id="cons" class="tabpanel active">
+      <div class="chart-section">
+        <h3>Consumption Trajectory</h3>
         <canvas id="consChart" height="320"></canvas>
       </div>
-      <div id="wealth" class="tabpanel">
-        <canvas id="wealthChart" height="320"></canvas>
+      
+      <div class="chart-section">
+        <h3>Wealth Trajectory</h3>
+        <canvas id="wealthChart" width="800" height="400" style="width: 100%; max-height: 400px;"></canvas>
       </div>
-      <div id="tau" class="tabpanel">
-        <canvas id="tauChart" height="320"></canvas>
+      
+      <div class="chart-section">
+        <h3>τ-Comparatives</h3>
+        <canvas id="tauChart" width="800" height="400" style="width: 100%; max-height: 400px;"></canvas>
       </div>
-      <div id="eqs" class="tabpanel">
+      
+      <div class="chart-section">
+        <h3>Mathematical Equations</h3>
         <div class="eqbox">
           <div>Effective discount force: \\(\kappa=\dfrac{\rho+(\gamma-1)r}{\gamma},\quad g=\dfrac{r-\rho}{\gamma},\quad R=e^{r(T_1+T_2)},\quad P(H)=\dfrac{1-e^{-\kappa H}}{\kappa}.\\)</div>
           <div id="eq_derived" class="small"></div>
@@ -167,288 +143,5 @@
     </main>
   </div>
 
-  <script>
-    // ----------------- Utilities -----------------
-    const $ = (id)=>document.getElementById(id);
-    const inputs = [
-      "r","rho","gamma","eta","T1","T2","beta","w0","y","zeta","tau"
-    ];
-    // Link numeric inputs with sliders
-    const link = (numId, sliderId, factor=1)=> {
-      const num = $(numId), slider=$(sliderId);
-      const sync = (from, to)=>()=>{ to.value = from.value; computeAndRender(); };
-      num.addEventListener('input', sync(num, slider));
-      slider.addEventListener('input', sync(slider, num));
-    };
-    link("r","r_slider"); link("rho","rho_slider");
-    link("T1","T1_slider"); link("T2","T2_slider");
-    link("gamma","gamma_slider"); link("eta","eta_slider");
-    link("beta","beta_slider"); link("w0","w0_slider");
-    link("y","y_slider"); link("zeta","zeta_slider");
-    link("tau","tau_slider");
-
-    // Tabs
-    document.querySelectorAll('.tab').forEach(tab=>{
-      tab.addEventListener('click', ()=>{
-        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-        document.querySelectorAll('.tabpanel').forEach(p=>p.classList.remove('active'));
-        tab.classList.add('active');
-        $(tab.dataset.tab).classList.add('active');
-      })
-    });
-
-    // ----------------- Math core -----------------
-    function toParams(){
-      const p = {};
-      inputs.forEach(k=> p[k] = parseFloat($(k).value));
-      p.T = p.T1 + p.T2;
-      p.alpha = p.eta / p.gamma;
-      p.g = (p.r - p.rho) / p.gamma;
-      p.kappa = (p.rho + (p.gamma - 1)*p.r) / p.gamma; // = r - g
-      p.R = Math.exp(p.r * (p.T1 + p.T2));
-      p.P = (H)=> {
-        const k = p.kappa;
-        if (Math.abs(k) < 1e-10) return H; // series fallback
-        return (1 - Math.exp(-k*H))/k;
-      };
-      return p;
-    }
-
-    function K1(p){
-      return Math.pow(p.beta, -1/p.gamma) *
-             Math.exp(((p.gamma-1)/p.gamma) * p.r * (p.T1 + p.T2)) *
-             Math.pow(1 - p.tau, (p.gamma-1)/p.gamma) *
-             p.P(p.T1);
-    }
-    function K2(p){
-      return Math.pow(p.beta, -1/p.gamma) *
-             Math.exp(((p.gamma-1)/p.gamma) * p.r * p.T2 - (p.rho/p.gamma) * p.T1) *
-             p.P(p.T2);
-    }
-
-    // RHS for terminal equation with income y
-    function RHS(p){
-      const X0 = p.w0 + p.y / p.r;
-      return p.R * (1 - p.tau) * X0 + Math.exp(p.r * p.T2) * p.tau * (p.y/p.r) - (p.y/p.r);
-    }
-
-    // F(W) = LHS - RHS
-    function F_of_W(W, p, K1v, K2v){
-      if (W < 0) return -1e99;
-      return W + (K1v + K2v) * Math.pow(W, p.alpha) - RHS(p);
-    }
-
-    // Solve for WT via bisection (monotone)
-    function solveWT(p){
-      const K1v = K1(p), K2v = K2(p);
-      // bracket: [0, RHS]
-      const hi0 = Math.max(1e-9, RHS(p)); // ensure positive
-      let lo = 0.0, hi = hi0;
-      let flo = F_of_W(lo, p, K1v, K2v); // = -RHS < 0
-      let fhi = F_of_W(hi, p, K1v, K2v); // > 0 because (K1+K2)*hi^alpha
-      if (!(flo < 0 && fhi > 0)) {
-        // Expand hi if weird numerical
-        let tries = 0;
-        while (tries < 40 && !(flo < 0 && fhi > 0)) {
-          hi *= 2; fhi = F_of_W(hi, p, K1v, K2v); tries++;
-        }
-        if (!(flo < 0 && fhi > 0)) {
-          throw new Error("Failed to bracket W_T");
-        }
-      }
-      // Bisection
-      let mid=0, fmid=0;
-      for (let i=0;i<80;i++){
-        mid = 0.5*(lo+hi);
-        fmid = F_of_W(mid, p, K1v, K2v);
-        if (Math.abs(fmid) < 1e-10) break;
-        if (fmid > 0){ hi = mid; fhi = fmid; } else { lo = mid; flo = fmid; }
-      }
-      return { WT: mid, K1v, K2v };
-    }
-
-    // Levels A, B from WT
-    function levelsFromWT(WT, p){
-      const B = Math.pow( (Math.pow(p.beta,-1) * Math.exp(-p.rho * p.T1) * Math.exp(-p.r * p.T2) * Math.pow(WT, p.eta)), 1/p.gamma );
-      const A = Math.pow(p.beta, -1/p.gamma) * Math.exp(-p.r * (p.T1 + p.T2)/p.gamma) *
-                Math.pow(1 - p.tau, -1/p.gamma) * Math.pow(WT, p.eta/p.gamma);
-      return {A,B};
-    }
-
-    // Trajectories (interior)
-    function trajectories(p, WT, A, B, n=500){
-      const times = []; const c = []; const W = [];
-      const X0 = p.w0 + p.y/p.r;
-      const P = p.P;
-      const tEnd = p.T1 + p.T2;
-
-      // Precompute X(T1-), X(T1+)
-      const X1m = Math.exp(p.r * p.T1) * (X0 - A * P(p.T1));
-      const X1p = (1 - p.tau) * X1m + p.tau * (p.y/p.r);
-
-      for (let i=0;i<=n;i++){
-        const t = (tEnd * i)/n;
-        times.push(t);
-        if (t < p.T1 - 1e-12){
-          const ct = A * Math.exp(p.g * t);
-          const Xt = Math.exp(p.r * t) * (X0 - A * P(t));
-          c.push(ct);
-          W.push(Xt - p.y/p.r);
-        } else {
-          const dt = Math.max(0, t - p.T1);
-          const ct = B * Math.exp(p.g * dt);
-          const Xt = Math.exp(p.r * dt) * (X1p - B * P(dt));
-          c.push(ct);
-          W.push(Xt - p.y/p.r);
-        }
-      }
-      // Also report key points:
-      const W1m = X1m - p.y/p.r;
-      const W1p = X1p - p.y/p.r;
-      return {times, c, W, W1m, W1p};
-    }
-
-    // Tau sweep
-    function tauSweep(p, n=120){
-      const taus = []; const W1m = []; const W1p = []; const WT = [];
-      const origTau = p.tau;
-      for (let i=0;i<=n;i++){
-        const tau = i/n * Math.min(0.9, Math.max(0.9, origTau)); // sweep 0..0.9
-        p.tau = tau;
-        try{
-          const {WT: WTval, K1v, K2v} = solveWT(p);
-          const {A,B} = levelsFromWT(WTval, p);
-          const traj = trajectories(p, WTval, A, B, 200);
-          taus.push(tau);
-          W1m.push(traj.W1m);
-          W1p.push(traj.W1p);
-          WT.push(WTval);
-        }catch(e){
-          // skip bad point
-        }
-      }
-      p.tau = origTau;
-      return {taus, W1m, W1p, WT};
-    }
-
-    // ----------------- Charts -----------------
-    let consChart, wealthChart, tauChart;
-    function ensureCharts(){
-      const mk = (ctx, label)=> new Chart(ctx, {
-        type:'line',
-        data:{labels:[], datasets:[{label, data:[], borderWidth:2, pointRadius:0, tension:0.1}]},
-        options:{
-          responsive:true,
-          scales:{
-            x:{ title:{display:true, text:'t'}},
-            y:{ title:{display:true, text:label}}
-          },
-          plugins:{
-            legend:{display:false}
-          }
-        }
-      });
-      if(!consChart) consChart = mk($('consChart').getContext('2d'), 'c(t)');
-      if(!wealthChart) wealthChart = mk($('wealthChart').getContext('2d'), 'W(t)');
-      if(!tauChart) tauChart = new Chart($('tauChart').getContext('2d'), {
-        type:'line',
-        data:{labels:[], datasets:[
-          {label:'W(T1-)', data:[], borderWidth:2, pointRadius:0},
-          {label:'W(T1+)', data:[], borderWidth:2, pointRadius:0},
-          {label:'W(T)', data:[], borderWidth:2, pointRadius:0}
-        ]},
-        options:{
-          responsive:true,
-          scales:{ x:{title:{display:true,text:'τ'}}, y:{title:{display:true,text:'Wealth'}}}
-        }
-      });
-    }
-
-    // ----------------- Render -----------------
-    function format(n){ 
-      if (!isFinite(n)) return '—';
-      const abs = Math.abs(n);
-      const d = abs<1e-4 ? 6 : abs<1 ? 4 : 3;
-      return n.toFixed(d);
-    }
-
-    function computeAndRender(){
-      ensureCharts();
-      $('warnings').textContent = '';
-      $('errors').textContent = '';
-      const p = toParams();
-      $('status').textContent = `g=${format(p.g)}  κ=${format(p.kappa)}  α=${format(p.alpha)}`;
-
-      // Guardrails and friendly notes
-      if (Math.abs(p.gamma-1)<1e-3 || Math.abs(p.eta-1)<1e-3){
-        $('warnings').textContent = 'Near log-utility (γ≈1 or η≈1): numeric stability can improve with exact log formulas (not yet switched automatically).';
-      }
-      if (p.tau>=0.95){
-        $('warnings').textContent += '  τ is very high; feasibility near the levy may fail.';
-      }
-      if (p.r === 0){
-        $('warnings').textContent += '  r=0: the y/r transform is undefined; please pick r>0.';
-      }
-      if (p.r<=0){
-        $('warnings').textContent += '  Nonpositive r reduces numerical robustness.';
-      }
-
-      try{
-        if (p.r<=0){ throw new Error("This version requires r>0 to use the X=W+y/r transform cleanly."); }
-        const {WT, K1v, K2v} = solveWT(p);
-        const {A,B} = levelsFromWT(WT, p);
-        const traj = trajectories(p, WT, A, B, 600);
-
-        // Constraint checks (informational in v1)
-        const minW = Math.min(...traj.W);
-        if (minW < p.zeta - 1e-8){
-          $('warnings').textContent += `  Borrowing floor violated: min W(t)=${format(minW)} < ζ=${format(p.zeta)}. (v1 shows interior path; binding-arc solution coming next.)`;
-        }
-        const levyFeasible = (traj.W1m >= p.zeta/(1-p.tau));
-        if (!levyFeasible){
-          $('warnings').textContent += `  Levy infeasible: W(T1-)=${format(traj.W1m)} < ζ/(1-τ)=${format(p.zeta/(1-p.tau))}.`;
-        }
-
-        // Consumption chart
-        consChart.data.labels = traj.times;
-        consChart.data.datasets[0].data = traj.c;
-        consChart.update();
-
-        // Wealth chart
-        wealthChart.data.labels = traj.times;
-        wealthChart.data.datasets[0].data = traj.W;
-        wealthChart.update();
-
-        // Tau sweep
-        const sweep = tauSweep(p, 140);
-        tauChart.data.labels = sweep.taus;
-        tauChart.data.datasets[0].data = sweep.W1m;
-        tauChart.data.datasets[1].data = sweep.W1p;
-        tauChart.data.datasets[2].data = sweep.WT;
-        tauChart.update();
-
-        // Equations numeric substitution
-        $('eq_derived').textContent =
-          `g=${format(p.g)}, κ=${format(p.kappa)}, R=${format(p.R)}, P(T1)=${format(p.P(p.T1))}, P(T2)=${format(p.P(p.T2))}`;
-        $('eq_terminal_nums').textContent =
-          `α=${format(p.alpha)};  RHS=${format(RHS(p))};  W_T≈${format(WT)};  LHS(W_T)=W_T+(K1+K2)W_T^α = ${format(WT + (K1v+K2v)*Math.pow(WT,p.alpha))}`;
-        $('eq_K_nums').textContent =
-          `K1(τ)=${format(K1v)},  K2=${format(K2v)}`;
-        $('eq_levels_nums').textContent =
-          `A=${format(A)},  B=${format(B)}`;
-        const X0 = p.w0 + p.y/p.r;
-        const X1m = Math.exp(p.r*p.T1)*(X0 - A*p.P(p.T1));
-        const X1p = (1-p.tau)*X1m + p.tau*(p.y/p.r);
-        $('eq_we_nums').textContent =
-          `X0=${format(X0)},  X(T1-)=${format(X1m)},  X(T1+)=${format(X1p)},  W(T1-)=${format(X1m - p.y/p.r)},  W(T1+)=${format(X1p - p.y/p.r)}`;
-
-      }catch(e){
-        $('errors').textContent = e.message || String(e);
-      }
-    }
-
-    // Initial compute
-    computeAndRender();
-  </script>
 </body>
 </html>
