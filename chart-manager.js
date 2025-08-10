@@ -25,14 +25,25 @@ class ChartManager {
         type: 'line',
         data: {
           labels: [],
-          datasets: [{
-            label: 'c(t)',
-            data: [],
-            borderWidth: 2,
-            pointRadius: 0,
-            tension: 0.1,
-            borderColor: '#22c55e'
-          }]
+          datasets: [
+            {
+              label: 'c(t)',
+              data: [],
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0.1,
+              borderColor: '#22c55e'
+            },
+            {
+              label: 'T₁',
+              data: [],
+              borderWidth: 2,
+              pointRadius: 0,
+              borderColor: 'rgba(255, 255, 255, 0.7)',
+              borderDash: [5, 5],
+              fill: false
+            }
+          ]
         },
         options: {
           responsive: true,
@@ -41,6 +52,10 @@ class ChartManager {
             x: { 
               title: { display: true, text: 't (years)' },
               type: 'linear',
+              grid: {
+                display: true,
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
               ticks: {
                 stepSize: 5,
                 callback: function(value) {
@@ -48,7 +63,13 @@ class ChartManager {
                 }
               }
             },
-            y: { title: { display: true, text: 'c(t)' } }
+            y: { 
+              title: { display: true, text: 'c(t)' },
+              grid: {
+                display: true,
+                color: 'rgba(255, 255, 255, 0.1)'
+              }
+            }
           },
           plugins: {
             legend: { display: false }
@@ -61,14 +82,25 @@ class ChartManager {
         type: 'line',
         data: {
           labels: [],
-          datasets: [{
-            label: 'W(t)',
-            data: [],
-            borderWidth: 2,
-            pointRadius: 0,
-            tension: 0.1,
-            borderColor: '#3b82f6'
-          }]
+          datasets: [
+            {
+              label: 'W(t)',
+              data: [],
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0.1,
+              borderColor: '#3b82f6'
+            },
+            {
+              label: 'T₁',
+              data: [],
+              borderWidth: 2,
+              pointRadius: 0,
+              borderColor: 'rgba(255, 255, 255, 0.7)',
+              borderDash: [5, 5],
+              fill: false
+            }
+          ]
         },
         options: {
           responsive: true,
@@ -77,6 +109,10 @@ class ChartManager {
             x: { 
               title: { display: true, text: 't (years)' },
               type: 'linear',
+              grid: {
+                display: true,
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
               ticks: {
                 stepSize: 5,
                 callback: function(value) {
@@ -84,7 +120,13 @@ class ChartManager {
                 }
               }
             },
-            y: { title: { display: true, text: 'W(t)' } }
+            y: { 
+              title: { display: true, text: 'W(t)' },
+              grid: {
+                display: true,
+                color: 'rgba(255, 255, 255, 0.1)'
+              }
+            }
           },
           plugins: {
             legend: { display: false }
@@ -127,14 +169,28 @@ class ChartManager {
           scales: {
             x: { 
               title: { display: true, text: 'τ (levy rate)' },
+              grid: {
+                display: true,
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
               ticks: {
-                stepSize: 0.1,
-                callback: function(value) {
-                  return (value * 10) % 1 === 0 ? value.toFixed(1) : '';
+                callback: function(value, index, ticks) {
+                  // Get the actual tau value from labels array
+                  const tauValue = this.chart.data.labels[index];
+                  if (tauValue !== undefined) {
+                    return (tauValue * 100).toFixed(0) + '%';
+                  }
+                  return '';
                 }
               }
             },
-            y: { title: { display: true, text: 'Wealth' } }
+            y: { 
+              title: { display: true, text: 'Wealth' },
+              grid: {
+                display: true,
+                color: 'rgba(255, 255, 255, 0.1)'
+              }
+            }
           }
         }
       });
@@ -230,7 +286,7 @@ class ChartManager {
   /**
    * Update consumption chart with trajectory data
    */
-  updateConsumptionChart(times, consumptionData) {
+  updateConsumptionChart(times, consumptionData, T1) {
     if (!this.charts.consumption) {
       throw new Error('Consumption chart not initialized');
     }
@@ -242,6 +298,14 @@ class ChartManager {
 
     this.charts.consumption.data.labels = times;
     this.charts.consumption.data.datasets[0].data = consumptionData;
+    
+    // Add T1 vertical line data
+    const T1LineData = times.map(t => t === T1 ? Math.max(...consumptionData) : null);
+    const T1LineDataFull = [
+      { x: T1, y: yRange.min },
+      { x: T1, y: yRange.max }
+    ];
+    this.charts.consumption.data.datasets[1].data = T1LineDataFull;
     this.charts.consumption.update('none'); // No animation for better performance
 
     // Update value display
@@ -251,7 +315,7 @@ class ChartManager {
   /**
    * Update wealth chart with trajectory data
    */
-  updateWealthChart(times, wealthData) {
+  updateWealthChart(times, wealthData, T1) {
     if (!this.charts.wealth) {
       console.error('Wealth chart not initialized');
       return;
@@ -264,6 +328,13 @@ class ChartManager {
 
     this.charts.wealth.data.labels = times;
     this.charts.wealth.data.datasets[0].data = wealthData;
+    
+    // Add T1 vertical line data
+    const T1LineDataFull = [
+      { x: T1, y: yRange.min },
+      { x: T1, y: yRange.max }
+    ];
+    this.charts.wealth.data.datasets[1].data = T1LineDataFull;
     this.charts.wealth.update('none'); // No animation for better performance
 
     // Update value display

@@ -213,9 +213,9 @@ function trajectories(p, WT, A, B, n = 500) {
 
 /**
  * Sweep tau parameter to analyze comparative statics
- * Optimized: 10 points from 0% to 80% for faster computation
+ * Optimized: 9 points at 10% intervals (0%, 10%, 20%...80%) for faster computation
  */
-function tauSweep(p, n = 10) {
+function tauSweep(p, n = 8) {
   const taus = [];
   const W1m = [];
   const W1p = [];

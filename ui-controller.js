@@ -286,8 +286,8 @@ class UIController {
 
       // Update charts
       try {
-        this.chartManager.updateConsumptionChart(trajectory.times, trajectory.c);
-        this.chartManager.updateWealthChart(trajectory.times, trajectory.W);
+        this.chartManager.updateConsumptionChart(trajectory.times, trajectory.c, params.T1);
+        this.chartManager.updateWealthChart(trajectory.times, trajectory.W, params.T1);
 
         // Generate tau sweep for comparative statics
         const tauSweepData = tauSweep(params);
