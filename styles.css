@@ -21,7 +21,7 @@ body {
 
 .app {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 480px 1fr;
   gap: 16px;
   height: 100vh;
   padding: 16px;
@@ -57,7 +57,7 @@ h2 {
 
 .row {
   display: grid;
-  grid-template-columns: 1fr 90px 90px;
+  grid-template-columns: 1fr 90px 135px;
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
