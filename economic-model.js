@@ -213,17 +213,17 @@ function trajectories(p, WT, A, B, n = 500) {
 
 /**
  * Sweep tau parameter to analyze comparative statics
- * FIXED: Previous version had logical error in tau calculation
+ * Optimized: 10 points from 0% to 80% for faster computation
  */
-function tauSweep(p, n = 120) {
+function tauSweep(p, n = 10) {
   const taus = [];
   const W1m = [];
   const W1p = [];
   const WT = [];
   const origTau = p.tau;
   
-  // FIXED: Correct tau sweep from 0 to min(0.9, 1.5*origTau)
-  const maxTau = Math.min(0.9, Math.max(0.9, 1.5 * origTau));
+  // Sweep from 0% to 80% (sufficient for most analysis)
+  const maxTau = 0.8;
   
   for (let i = 0; i <= n; i++) {
     const tau = (i / n) * maxTau;

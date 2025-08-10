@@ -290,7 +290,7 @@ class UIController {
         this.chartManager.updateWealthChart(trajectory.times, trajectory.W);
 
         // Generate tau sweep for comparative statics
-        const tauSweepData = tauSweep(params, 140);
+        const tauSweepData = tauSweep(params);
         this.chartManager.updateTauChart(tauSweepData);
       } catch (error) {
         console.error('Chart update failed:', error);
