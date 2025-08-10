@@ -100,43 +100,82 @@
 
     <main class="panel">
       <div class="chart-section">
-        <h3>Consumption Trajectory</h3>
+        <div class="chart-header">
+          <h3>Consumption Trajectory</h3>
+          <div class="y-axis-controls">
+            <label>Y-axis:</label>
+            <select id="cons-y-mode" class="y-mode-select">
+              <option value="auto">Auto</option>
+              <option value="sticky25">Sticky 25%</option>
+              <option value="sticky50">Sticky 50%</option>
+              <option value="baseline">Baseline</option>
+            </select>
+            <button id="cons-reset" class="reset-btn" title="Reset to auto scaling">Reset</button>
+            <span id="cons-range" class="value-display"></span>
+          </div>
+        </div>
         <canvas id="consChart" height="320"></canvas>
       </div>
       
       <div class="chart-section">
-        <h3>Wealth Trajectory</h3>
+        <div class="chart-header">
+          <h3>Wealth Trajectory</h3>
+          <div class="y-axis-controls">
+            <label>Y-axis:</label>
+            <select id="wealth-y-mode" class="y-mode-select">
+              <option value="auto">Auto</option>
+              <option value="sticky25">Sticky 25%</option>
+              <option value="sticky50">Sticky 50%</option>
+              <option value="baseline">Baseline</option>
+            </select>
+            <button id="wealth-reset" class="reset-btn" title="Reset to auto scaling">Reset</button>
+            <span id="wealth-range" class="value-display"></span>
+          </div>
+        </div>
         <canvas id="wealthChart" width="800" height="400" style="width: 100%; max-height: 400px;"></canvas>
       </div>
       
       <div class="chart-section">
-        <h3>τ-Comparatives</h3>
+        <div class="chart-header">
+          <h3>τ-Comparatives</h3>
+          <div class="y-axis-controls">
+            <label>Y-axis:</label>
+            <select id="tau-y-mode" class="y-mode-select">
+              <option value="auto">Auto</option>
+              <option value="sticky25">Sticky 25%</option>
+              <option value="sticky50">Sticky 50%</option>
+              <option value="baseline">Baseline</option>
+            </select>
+            <button id="tau-reset" class="reset-btn" title="Reset to auto scaling">Reset</button>
+            <span id="tau-range" class="value-display"></span>
+          </div>
+        </div>
         <canvas id="tauChart" width="800" height="400" style="width: 100%; max-height: 400px;"></canvas>
       </div>
       
       <div class="chart-section">
         <h3>Mathematical Equations</h3>
         <div class="eqbox">
-          <div>Effective discount force: \\(\kappa=\dfrac{\rho+(\gamma-1)r}{\gamma},\quad g=\dfrac{r-\rho}{\gamma},\quad R=e^{r(T_1+T_2)},\quad P(H)=\dfrac{1-e^{-\kappa H}}{\kappa}.\\)</div>
+          <div>Effective discount force: \(\kappa=\dfrac{\rho+(\gamma-1)r}{\gamma},\quad g=\dfrac{r-\rho}{\gamma},\quad R=e^{r(T_1+T_2)},\quad P(H)=\dfrac{1-e^{-\kappa H}}{\kappa}.\)</div>
           <div id="eq_derived" class="small"></div>
         </div>
         <div class="eqbox">
           <div>Terminal equation (with income):</div>
-          <div>\\(W_T + (K_1(\tau)+K_2)\,W_T^{\alpha} = R(1-\tau)\Big(w_0+\frac{y}{r}\Big)+e^{rT_2}\tau\frac{y}{r}-\frac{y}{r},\quad \alpha=\eta/\gamma.\\)</div>
+          <div>\(W_T + (K_1(\tau)+K_2)\,W_T^{\alpha} = R(1-\tau)\Big(w_0+\frac{y}{r}\Big)+e^{rT_2}\tau\frac{y}{r}-\frac{y}{r},\quad \alpha=\eta/\gamma.\)</div>
           <div id="eq_terminal_nums" class="small"></div>
         </div>
         <div class="eqbox">
-          <div>\\(K_1(\tau)=\beta^{-1/\gamma} e^{\frac{\gamma-1}{\gamma}r(T_1+T_2)}(1-\tau)^{\frac{\gamma-1}{\gamma}} P(T_1),\quad
-               K_2=\beta^{-1/\gamma} e^{\frac{\gamma-1}{\gamma}rT_2-\frac{\rho}{\gamma}T_1} P(T_2).\\)</div>
+          <div>\(K_1(\tau)=\beta^{-1/\gamma} e^{\frac{\gamma-1}{\gamma}r(T_1+T_2)}(1-\tau)^{\frac{\gamma-1}{\gamma}} P(T_1),\quad
+               K_2=\beta^{-1/\gamma} e^{\frac{\gamma-1}{\gamma}rT_2-\frac{\rho}{\gamma}T_1} P(T_2).\)</div>
           <div id="eq_K_nums" class="small"></div>
         </div>
         <div class="eqbox">
-          <div>Levels: \\(B=\big(\beta^{-1} e^{-\rho T_1} e^{-rT_2} W_T^\eta\big)^{1/\gamma},\quad
-                        A=\beta^{-1/\gamma} e^{-r(T_1+T_2)/\gamma}(1-\tau)^{-1/\gamma} W_T^{\eta/\gamma}.\\)</div>
+          <div>Levels: \(B=\big(\beta^{-1} e^{-\rho T_1} e^{-rT_2} W_T^\eta\big)^{1/\gamma},\quad
+                        A=\beta^{-1/\gamma} e^{-r(T_1+T_2)/\gamma}(1-\tau)^{-1/\gamma} W_T^{\eta/\gamma}.\)</div>
           <div id="eq_levels_nums" class="small"></div>
         </div>
         <div class="eqbox">
-          <div>Wealth (interior): pre-levy \\(X(t)=e^{rt}\big(X_0 - A P(t)\big)\\), post-levy \\(X(t)=e^{r(t-T_1)}\big(X_1^+ - B P(t-T_1)\big)\\), with \\(X=W+y/r,\, X_0=w_0+y/r,\, X_1^+=(1-\tau)X_1^-+\tau y/r\\).</div>
+          <div>Wealth (interior): pre-levy \(X(t)=e^{rt}\big(X_0 - A P(t)\big)\), post-levy \(X(t)=e^{r(t-T_1)}\big(X_1^+ - B P(t-T_1)\big)\), with \(X=W+y/r,\, X_0=w_0+y/r,\, X_1^+=(1-\tau)X_1^-+\tau y/r\).</div>
           <div id="eq_we_nums" class="small"></div>
         </div>
       </div>

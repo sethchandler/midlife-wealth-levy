@@ -6,6 +6,13 @@
 class ChartManager {
   constructor() {
     this.charts = {};
+    this.scalingModes = {
+      consumption: 'auto',
+      wealth: 'auto', 
+      tau: 'auto'
+    };
+    this.baselines = {};
+    this.currentRanges = {};
   }
 
   /**
@@ -139,6 +146,86 @@ class ChartManager {
     }
   }
 
+  /**
+   * Set scaling mode for a specific chart
+   */
+  setScalingMode(chartType, mode) {
+    this.scalingModes[chartType] = mode;
+    if (mode === 'baseline') {
+      this.setBaseline(chartType);
+    }
+  }
+
+  /**
+   * Set current data range as baseline for a chart
+   */
+  setBaseline(chartType) {
+    if (this.currentRanges[chartType]) {
+      this.baselines[chartType] = { ...this.currentRanges[chartType] };
+    }
+  }
+
+  /**
+   * Calculate data range from array
+   */
+  calculateRange(data) {
+    if (!data || data.length === 0) return { min: 0, max: 1 };
+    
+    const validData = data.filter(val => isFinite(val));
+    if (validData.length === 0) return { min: 0, max: 1 };
+    
+    const min = Math.min(...validData);
+    const max = Math.max(...validData);
+    
+    // Add 5% padding
+    const padding = (max - min) * 0.05;
+    return {
+      min: min - padding,
+      max: max + padding
+    };
+  }
+
+  /**
+   * Determine if chart should rescale based on mode and thresholds
+   */
+  shouldRescale(chartType, newRange) {
+    const mode = this.scalingModes[chartType];
+    const currentRange = this.currentRanges[chartType];
+    
+    if (mode === 'auto') return true;
+    if (mode === 'baseline') return false;
+    if (!currentRange) return true;
+    
+    // Sticky modes - check if change exceeds threshold
+    const threshold = mode === 'sticky25' ? 0.25 : 0.50;
+    const currentSpan = currentRange.max - currentRange.min;
+    const newSpan = newRange.max - newRange.min;
+    
+    const minChange = Math.abs(newRange.min - currentRange.min) / currentSpan;
+    const maxChange = Math.abs(newRange.max - currentRange.max) / currentSpan;
+    
+    return minChange > threshold || maxChange > threshold;
+  }
+
+  /**
+   * Get appropriate y-axis range for chart based on scaling mode
+   */
+  getYAxisRange(chartType, data) {
+    const newRange = this.calculateRange(data);
+    const mode = this.scalingModes[chartType];
+    
+    if (mode === 'baseline' && this.baselines[chartType]) {
+      return this.baselines[chartType];
+    }
+    
+    if (this.shouldRescale(chartType, newRange)) {
+      this.currentRanges[chartType] = newRange;
+      return newRange;
+    }
+    
+    return this.currentRanges[chartType] || newRange;
+  }
+
 
   /**
    * Update consumption chart with trajectory data
@@ -148,9 +235,17 @@ class ChartManager {
       throw new Error('Consumption chart not initialized');
     }
 
+    // Apply scaling mode
+    const yRange = this.getYAxisRange('consumption', consumptionData);
+    this.charts.consumption.options.scales.y.min = yRange.min;
+    this.charts.consumption.options.scales.y.max = yRange.max;
+
     this.charts.consumption.data.labels = times;
     this.charts.consumption.data.datasets[0].data = consumptionData;
     this.charts.consumption.update('none'); // No animation for better performance
+
+    // Update value display
+    this.updateValueDisplay('cons', yRange);
   }
 
   /**
@@ -162,9 +257,17 @@ class ChartManager {
       return;
     }
 
+    // Apply scaling mode
+    const yRange = this.getYAxisRange('wealth', wealthData);
+    this.charts.wealth.options.scales.y.min = yRange.min;
+    this.charts.wealth.options.scales.y.max = yRange.max;
+
     this.charts.wealth.data.labels = times;
     this.charts.wealth.data.datasets[0].data = wealthData;
     this.charts.wealth.update('none'); // No animation for better performance
+
+    // Update value display
+    this.updateValueDisplay('wealth', yRange);
   }
 
   /**
@@ -177,12 +280,51 @@ class ChartManager {
     }
 
     const { taus, W1m, W1p, WT } = tauData;
+    
+    // Combine all tau data for range calculation
+    const allTauValues = [...W1m, ...W1p, ...WT];
+    const yRange = this.getYAxisRange('tau', allTauValues);
+    this.charts.tau.options.scales.y.min = yRange.min;
+    this.charts.tau.options.scales.y.max = yRange.max;
 
     this.charts.tau.data.labels = taus;
     this.charts.tau.data.datasets[0].data = W1m;
     this.charts.tau.data.datasets[1].data = W1p;
     this.charts.tau.data.datasets[2].data = WT;
     this.charts.tau.update('none'); // No animation for better performance
+
+    // Update value display
+    this.updateValueDisplay('tau', yRange);
+  }
+
+  /**
+   * Update value display for a chart
+   */
+  updateValueDisplay(chartPrefix, range) {
+    const element = document.getElementById(`${chartPrefix}-range`);
+    if (element) {
+      const formatNum = (n) => {
+        if (Math.abs(n) < 0.01) return n.toFixed(4);
+        if (Math.abs(n) < 1) return n.toFixed(3);
+        return n.toFixed(2);
+      };
+      element.textContent = `[${formatNum(range.min)}, ${formatNum(range.max)}]`;
+    }
+  }
+
+  /**
+   * Reset chart to auto scaling mode
+   */
+  resetToAuto(chartType) {
+    this.scalingModes[chartType] = 'auto';
+    delete this.currentRanges[chartType];
+    delete this.baselines[chartType];
+    
+    // Update the dropdown
+    const select = document.getElementById(`${chartType === 'consumption' ? 'cons' : chartType}-y-mode`);
+    if (select) {
+      select.value = 'auto';
+    }
   }
 
   /**

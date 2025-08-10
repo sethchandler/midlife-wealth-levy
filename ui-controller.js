@@ -15,6 +15,7 @@ class UIController {
    */
   initialize() {
     this.setupInputSynchronization();
+    this.setupYAxisControls();
     this.chartManager.initializeCharts();
     this.computeAndRender(); // Initial render
   }
@@ -70,6 +71,37 @@ class UIController {
     });
   }
 
+  /**
+   * Setup Y-axis scaling controls for all charts
+   */
+  setupYAxisControls() {
+    const charts = [
+      { id: 'cons', type: 'consumption' },
+      { id: 'wealth', type: 'wealth' },
+      { id: 'tau', type: 'tau' }
+    ];
+
+    charts.forEach(({ id, type }) => {
+      // Setup mode selector
+      const modeSelect = document.getElementById(`${id}-y-mode`);
+      if (modeSelect) {
+        modeSelect.addEventListener('change', (e) => {
+          this.chartManager.setScalingMode(type, e.target.value);
+          this.computeAndRender(); // Re-render with new scaling mode
+        });
+      }
+
+      // Setup reset button
+      const resetBtn = document.getElementById(`${id}-reset`);
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          this.chartManager.resetToAuto(type);
+          this.computeAndRender(); // Re-render with auto scaling
+        });
+      }
+    });
+  }
+
 
   /**
    * Update status display
@@ -77,27 +109,17 @@ class UIController {
   updateStatus(params) {
     const statusElement = document.getElementById('status');
     if (statusElement) {
-      statusElement.innerHTML = `g=${format(params.g)}  \\\\(\\kappa\\\\)=${format(params.kappa)}  \\\\(\\alpha\\\\)=${format(params.alpha)}  \\\\(\\beta\\\\)=${format(params.beta)}`;
-      this.renderKaTeX(statusElement);
-    }
-  }
-
-  /**
-   * Render KaTeX in a specific element
-   */
-  renderKaTeX(element) {
-    if (typeof renderMathInElement !== 'undefined') {
-      // Add timing safety to ensure DOM is settled
-      setTimeout(() => {
-        renderMathInElement(element, {
+      statusElement.innerHTML = `g=${format(params.g)}  \\(\\kappa\\)=${format(params.kappa)}  \\(\\alpha\\)=${format(params.alpha)}  \\(\\beta\\)=${format(params.beta)}`;
+      if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(statusElement, {
           delimiters: [
             {left: '$$', right: '$$', display: true},
-            {left: '\\(', right: '\\)', display: false},
-            {left: '\\[', right: '\\]', display: true}
+            {left: '\\[', right: '\\]', display: true},
+            {left: '\\(', right: '\\)', display: false}
           ],
           throwOnError: false
         });
-      }, 0);
+      }
     }
   }
 
@@ -147,6 +169,20 @@ class UIController {
    * Update equation displays with computed values
    */
   updateEquations(params, results) {
+    // Helper function to render KaTeX with explicit delimiters
+    const renderKaTeX = (element) => {
+      if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(element, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '\\[', right: '\\]', display: true},
+            {left: '\\(', right: '\\)', display: false}
+          ],
+          throwOnError: false
+        });
+      }
+    };
+
     const { WT, K1v, K2v } = results.solution;
     const { A, B } = results.levels;
 
@@ -154,9 +190,8 @@ class UIController {
     const derivedElement = document.getElementById('eq_derived');
     if (derivedElement) {
       derivedElement.innerHTML = 
-        `g=${format(params.g)}, \\\\(\\kappa\\\\)=${format(params.kappa)}, R=${format(params.R)}, P(T1)=${format(params.P(params.T1))}, P(T2)=${format(params.P(params.T2))}`;
-      console.log('Derived element HTML:', derivedElement.innerHTML);
-      this.renderKaTeX(derivedElement);
+        `g=${format(params.g)}, \\(\\kappa\\)=${format(params.kappa)}, R=${format(params.R)}, P(T1)=${format(params.P(params.T1))}, P(T2)=${format(params.P(params.T2))}`;
+      renderKaTeX(derivedElement);
     }
 
     // Terminal equation
@@ -166,22 +201,22 @@ class UIController {
                       Math.exp(params.r * params.T2) * params.tau * (params.y / params.r) - (params.y / params.r);
       const lhsValue = WT + (K1v + K2v) * Math.pow(WT, params.alpha);
       terminalElement.innerHTML = 
-        `\\\\(\\alpha\\\\)=${format(params.alpha)};  RHS=${format(rhsValue)};  \\\\(W_T\\\\)≈${format(WT)};  LHS(\\\\(W_T\\\\))=${format(lhsValue)}`;
-      this.renderKaTeX(terminalElement);
+        `\\(\\alpha\\)=${format(params.alpha)};  RHS=${format(rhsValue)};  \\(W_T\\)≈${format(WT)};  LHS(\\(W_T\\))=${format(lhsValue)}`;
+      renderKaTeX(terminalElement);
     }
 
     // K coefficients
     const kElement = document.getElementById('eq_K_nums');
     if (kElement) {
-      kElement.innerHTML = `\\\\(K_1(\\tau)\\\\)=${format(K1v)},  \\\\(K_2\\\\)=${format(K2v)}`;
-      this.renderKaTeX(kElement);
+      kElement.innerHTML = `\\(K_1(\\tau)\\)=${format(K1v)},  \\(K_2\\)=${format(K2v)}`;
+      renderKaTeX(kElement);
     }
 
     // Consumption levels
     const levelsElement = document.getElementById('eq_levels_nums');
     if (levelsElement) {
       levelsElement.innerHTML = `A=${format(A)},  B=${format(B)}`;
-      this.renderKaTeX(levelsElement);
+      renderKaTeX(levelsElement);
     }
 
     // Wealth evolution
@@ -191,8 +226,8 @@ class UIController {
       const X1m = Math.exp(params.r * params.T1) * (X0 - A * params.P(params.T1));
       const X1p = (1 - params.tau) * X1m + params.tau * (params.y / params.r);
       wealthElement.innerHTML = 
-        `\\\\(X_0\\\\)=${format(X0)},  \\\\(X(T_1^-)\\\\)=${format(X1m)},  \\\\(X(T_1^+)\\\\)=${format(X1p)},  \\\\(W(T_1^-)\\\\)=${format(X1m - params.y / params.r)},  \\\\(W(T_1^+)\\\\)=${format(X1p - params.y / params.r)}`;
-      this.renderKaTeX(wealthElement);
+        `\\(X_0\\)=${format(X0)},  \\(X(T_1^-)\\)=${format(X1m)},  \\(X(T_1^+)\\)=${format(X1p)},  \\(W(T_1^-)\\)=${format(X1m - params.y / params.r)},  \\(W(T_1^+)\\)=${format(X1p - params.y / params.r)}`;
+      renderKaTeX(wealthElement);
     }
   }
 
