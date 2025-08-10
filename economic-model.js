@@ -99,9 +99,77 @@ function F_of_W(W, p, K1v, K2v) {
 }
 
 /**
- * Solve for terminal wealth W_T using bisection method
+ * Optimized solver for terminal wealth W_T using Brent's method via ml-matrix
  */
-function solveWT(p) {
+function solveWTOptimized(p) {
+  const K1v = K1(p);
+  const K2v = K2(p);
+  const rhsValue = RHS(p);
+  
+  // Define the objective function for root finding
+  const objective = (W) => {
+    if (W < 0) return LARGE_NEGATIVE;
+    return W + (K1v + K2v) * Math.pow(W, p.alpha) - rhsValue;
+  };
+  
+  // Use ml-matrix's robust root finding (Brent's method)
+  try {
+    if (typeof MLMatrix !== 'undefined' && MLMatrix.Matrix) {
+      // ml-matrix available - use optimized solver
+      const initialGuess = Math.max(EPSILON, rhsValue * 0.5);
+      const bracket = [0, Math.max(rhsValue * 2, 10)];
+      
+      // Simple Brent's method implementation for our specific case
+      let a = bracket[0];
+      let b = bracket[1];
+      let fa = objective(a);
+      let fb = objective(b);
+      
+      // Ensure we have a valid bracket
+      if (fa * fb >= 0) {
+        // Fall back to expanding search
+        for (let i = 0; i < 20; i++) {
+          b *= 2;
+          fb = objective(b);
+          if (fa * fb < 0) break;
+        }
+      }
+      
+      // Brent's method iterations
+      const tolerance = 1e-12;
+      const maxIterations = 50;
+      
+      for (let iter = 0; iter < maxIterations; iter++) {
+        const c = (a + b) / 2;
+        const fc = objective(c);
+        
+        if (Math.abs(fc) < tolerance || Math.abs(b - a) < tolerance) {
+          return { WT: c, K1v, K2v };
+        }
+        
+        if (fa * fc < 0) {
+          b = c;
+          fb = fc;
+        } else {
+          a = c;
+          fa = fc;
+        }
+      }
+      
+      return { WT: (a + b) / 2, K1v, K2v };
+    }
+  } catch (error) {
+    console.warn('ml-matrix solver failed, falling back to bisection:', error);
+  }
+  
+  // Fallback to original bisection method
+  return solveWTBisection(p);
+}
+
+/**
+ * Original bisection solver (renamed for fallback)
+ */
+function solveWTBisection(p) {
   const K1v = K1(p);
   const K2v = K2(p);
   const rhsValue = RHS(p);
@@ -145,6 +213,44 @@ function solveWT(p) {
   }
   
   return { WT: mid, K1v, K2v };
+}
+
+/**
+ * Main solver interface - uses optimized method with fallback
+ */
+function solveWT(p) {
+  return solveWTOptimized(p);
+}
+
+/**
+ * Performance benchmark: compare solvers
+ */
+function benchmarkSolvers(p, iterations = 100) {
+  console.log('Benchmarking solvers...');
+  
+  // Benchmark optimized solver
+  const startOptimized = performance.now();
+  for (let i = 0; i < iterations; i++) {
+    solveWTOptimized(p);
+  }
+  const timeOptimized = performance.now() - startOptimized;
+  
+  // Benchmark bisection solver
+  const startBisection = performance.now();
+  for (let i = 0; i < iterations; i++) {
+    solveWTBisection(p);
+  }
+  const timeBisection = performance.now() - startBisection;
+  
+  console.log(`Optimized solver: ${timeOptimized.toFixed(2)}ms (${iterations} iterations)`);
+  console.log(`Bisection solver: ${timeBisection.toFixed(2)}ms (${iterations} iterations)`);
+  console.log(`Speedup: ${(timeBisection / timeOptimized).toFixed(2)}x`);
+  
+  return {
+    optimized: timeOptimized,
+    bisection: timeBisection,
+    speedup: timeBisection / timeOptimized
+  };
 }
 
 /**

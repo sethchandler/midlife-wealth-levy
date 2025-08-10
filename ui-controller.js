@@ -7,7 +7,7 @@ class UIController {
   constructor() {
     this.chartManager = new ChartManager();
     this.computationTimeoutId = null;
-    this.DEBOUNCE_DELAY = 100; // milliseconds
+    this.DEBOUNCE_DELAY = 50; // milliseconds - faster response for real-time interaction
   }
 
   /**
